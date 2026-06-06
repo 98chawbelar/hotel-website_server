@@ -1,5 +1,6 @@
 const express = require("express");
 const Room = require("./room.model");
+const upload = require("../middleware/upload");
 const {
   postARoom,
   getAllRooms,
@@ -11,7 +12,7 @@ const verifyAdminToken = require("../middleware/verifyAdminToken");
 const router = express.Router();
 
 // post a room
-router.post("/create-room", postARoom);
+router.post("/create-room", upload.single("image"), postARoom);
 
 // get all rooms
 router.get("/", getAllRooms);

@@ -3,7 +3,12 @@ const Room = require("./room.model");
 // Create Room
 const postARoom = async (req, res) => {
   try {
-    const newRoom = new Room({ ...req.body });
+    const newRoom = new Room({
+      ...req.body,
+      image: req.file
+        ? `http://localhost:5000/uploads/${req.file.filename}`
+        : "",
+    });
 
     await newRoom.save();
 
