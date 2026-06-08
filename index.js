@@ -19,14 +19,14 @@ app.use(
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // routes
-const userRoutes = require("./src/users/user.route");
+const adminAuthRoutes = require("./src/admin/admin.route");
 const adminRoutes = require("./src/status/admin.stats");
 const bookingRoutes = require("./src/bookings/booking.route");
 const roomRoutes = require("./src/rooms/room.route");
 const facilityRoutes = require("./src/facilities/facility.route");
 const extraFacilityRoutes = require("./src/extrafacilities/extrafacility.route");
 
-app.use("/api/auth", userRoutes);
+app.use("/api/auth", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/booking", bookingRoutes);
 app.use("/api/rooms", roomRoutes);

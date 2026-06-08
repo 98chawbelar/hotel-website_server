@@ -3,9 +3,10 @@ const router = express.Router();
 
 const Booking = require("../bookings/booking.model");
 const Room = require("../rooms/room.model");
+const verifyAdminToken = require("../../src/middleware/verifyAdminToken");
 
 // ================= ADMIN DASHBOARD STATS =================
-router.get("/", async (req, res) => {
+router.get("/", verifyAdminToken, async (req, res) => {
   try {
     // ================= TOTAL BOOKINGS =================
     const totalBookings = await Booking.countDocuments();
