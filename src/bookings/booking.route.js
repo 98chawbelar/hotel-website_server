@@ -8,10 +8,14 @@ const {
   updateBookingStatus,
   deleteABooking,
   cancelBooking,
+  getAllBookings,
 } = require("./booking.controller");
 
 // Create Booking
 router.post("/", createABooking);
+
+//Get All Bookings
+router.get("/", getAllBookings);
 
 // Get Booking By Email
 router.get("/email/:email", getBookingsByEmail);

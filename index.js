@@ -28,7 +28,7 @@ const extraFacilityRoutes = require("./src/extrafacilities/extrafacility.route")
 
 app.use("/api/auth", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/booking", bookingRoutes);
+app.use("/api/bookings", bookingRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/facilities", facilityRoutes);
 app.use("/api/extrafacilities", extraFacilityRoutes);

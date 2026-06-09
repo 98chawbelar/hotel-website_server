@@ -69,6 +69,20 @@ const createABooking = async (req, res) => {
   }
 };
 
+//Get All Bookings
+const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate("room")
+      .sort({ createdAt: -1 });
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 // Get Bookings By Email
 const getBookingsByEmail = async (req, res) => {
   const email = req.params.email;
@@ -210,6 +224,7 @@ const deleteABooking = async (req, res) => {
 
 module.exports = {
   createABooking,
+  getAllBookings,
   getBookingsByEmail,
   getSingleBooking,
   updateBookingStatus,
