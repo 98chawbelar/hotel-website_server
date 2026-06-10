@@ -12,8 +12,8 @@ const roomSchema = new mongoose.Schema(
       default: "available",
     },
     capacity: {
-      adults: [Number],
-      child: [Number],
+      adults: Number,
+      child: Number,
     },
 
     checkIn: String,

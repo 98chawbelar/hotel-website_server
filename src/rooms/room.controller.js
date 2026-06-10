@@ -5,6 +5,7 @@ const postARoom = async (req, res) => {
   try {
     const newRoom = new Room({
       ...req.body,
+      capacity: req.body.capacity,
       image: req.file
         ? `http://localhost:5000/uploads/${req.file.filename}`
         : "",
