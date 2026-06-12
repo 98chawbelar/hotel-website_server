@@ -67,7 +67,7 @@ const updateRoom = async (req, res) => {
     const { id } = req.params;
 
     const updatedRoom = await Room.findByIdAndUpdate(id, req.body, {
-      new: true,
+      returnDocument: "after",
     });
 
     if (!updatedRoom) {
