@@ -1,4 +1,6 @@
+const calculateBookingPrice = require("../utils/calculateBookingPrice");
 const Booking = require("./booking.model");
+const Room = require("../rooms/room.model");
 
 //Check Overlap Helper
 const isRoomAvailable = async (roomId, checkIn, checkOut) => {
@@ -52,19 +54,74 @@ const createABooking = async (req, res) => {
       });
     }
 
-    const newBooking = new Booking(req.body);
+    const roomData = await Room.findById(room);
+    if (!roomData) {
+      return res.status(404).json({
+        messae: "Room not found",
+      });
+    }
+
+    const pricing = await calculateBookingPrice({
+      roomPrice: roomData.price,
+      checkIn,
+      checkOut,
+      extrasTotal: 0,
+    });
+
+    const newBooking = new Booking({
+      ...req.body,
+      totalPrice: pricing.totalPrice,
+
+      pricing: {
+        nights: pricing.nights,
+        roomPrice: pricing.roomPrice,
+        subtotal: pricing.subtotal,
+        discount: pricing.discount,
+        extrasTotal: pricing.extrasTotal,
+        currency: pricing.currency,
+      },
+    });
 
     const savedBooking = await newBooking.save();
 
-    res.status(200).json({
+    res.status(201).json({
       message: "Booking created successfully",
       booking: savedBooking,
+      pricing,
     });
   } catch (error) {
     console.error("Error creating booking", error);
 
     res.status(500).json({
       message: "Failed to create booking",
+    });
+  }
+};
+
+// Calculate Pricing
+const calculatePricePreview = async (req, res) => {
+  try {
+    const { roomId, checkIn, checkOut, extrasTotal = 0 } = req.body;
+
+    const room = await Room.findById(roomId);
+
+    if (!room) {
+      return res.status(404).json({
+        message: "Room not found",
+      });
+    }
+
+    const pricing = await calculateBookingPrice({
+      roomPrice: room.price,
+      checkIn,
+      checkOut,
+      extrasTotal,
+    });
+
+    res.status(200).json(pricing);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
     });
   }
 };
@@ -224,6 +281,7 @@ const deleteABooking = async (req, res) => {
 
 module.exports = {
   createABooking,
+  calculatePricePreview,
   getAllBookings,
   getBookingsByEmail,
   getSingleBooking,

@@ -18,23 +18,34 @@ const bookingSchema = new mongoose.Schema(
     checkOut: Date,
 
     adults: Number,
-    children: Number,
+
+    child: Number,
 
     extras: [String],
 
     specialRequests: String,
 
     paymentMethod: String,
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid"],
       default: "pending",
     },
 
-    totalPrice: Number,
+    pricing: {
+      nights: Number,
+      roomPrice: Number,
+      subtotal: Number,
+      discount: Number,
+      extrasTotal: Number,
+      totalPrice: Number,
+      currency: String,
+    },
 
     bookingStatus: {
       type: String,
+      enum: ["pending", "confirmed", "checked_in", "checked_out", "cancelled"],
       default: "pending",
     },
   },
@@ -43,5 +54,4 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
-const Booking = mongoose.model("Booking", bookingSchema);
-module.exports = Booking;
+module.exports = mongoose.model("Booking", bookingSchema);

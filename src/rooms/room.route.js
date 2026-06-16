@@ -21,7 +21,7 @@ router.get("/", getAllRooms);
 router.get("/:id", getSingleRoom);
 
 // update a room endpoint
-router.put("/edit/:id", verifyAdminToken, updateRoom);
+router.put("/edit/:id", verifyAdminToken, upload.single("image"), updateRoom);
 
 // delete a room endpoint
 router.delete("/:id", verifyAdminToken, deleteARoom);

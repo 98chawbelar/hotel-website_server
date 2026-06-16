@@ -8,8 +8,11 @@ const {
   updateBookingStatus,
   deleteABooking,
   cancelBooking,
+  calculatePricePreview,
   getAllBookings,
 } = require("./booking.controller");
+
+router.post("/price-preview", calculatePricePreview);
 
 // Create Booking
 router.post("/", createABooking);
