@@ -24,6 +24,7 @@ const adminRoutes = require("./src/status/admin.stats");
 const bookingRoutes = require("./src/bookings/booking.route");
 const roomRoutes = require("./src/rooms/room.route");
 const facilityRoutes = require("./src/facilities/facility.route");
+const revenueRoutes = require("./src/revenue/revenue.route");
 const extraFacilityRoutes = require("./src/extrafacilities/extrafacility.route");
 
 app.use("/api/auth", adminAuthRoutes);
@@ -31,6 +32,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/facilities", facilityRoutes);
+app.use("/api/revenue", revenueRoutes);
 app.use("/api/extrafacilities", extraFacilityRoutes);
 
 async function main() {

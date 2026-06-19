@@ -4,7 +4,7 @@ const priceSchema = new mongoose.Schema(
   {
     currency: {
       type: String,
-      default: "MMK",
+      default: "Ks",
     },
 
     weeklyDiscountPercent: {

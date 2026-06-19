@@ -6,25 +6,62 @@ const extraFacilitySchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
     },
 
-    label: {
+    name: {
       type: String,
       required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    image: {
+      type: String,
+      default: "",
+    },
+
+    icon: {
+      type: String,
+      default: "",
+    },
+
+    pricingType: {
+      type: String,
+      enum: ["per_booking", "per_night", "per_person"],
+      default: "per_booking",
     },
 
     price: {
       type: Number,
       required: true,
+      min: 0,
     },
 
-    desc: {
+    maxQuantity: {
+      type: Number,
+      default: 1,
+    },
+
+    availableFor: {
       type: String,
+      enum: ["all", "room", "guest"],
+      default: "all",
     },
 
     isActive: {
       type: Boolean,
       default: true,
+    },
+
+    order: {
+      type: Number,
+      default: 0,
     },
   },
   {
@@ -32,4 +69,4 @@ const extraFacilitySchema = new mongoose.Schema(
   },
 );
 
-const ExtraFacility = mongoose.model("ExtraFacility", extraFacilitySchema);
+module.exports = mongoose.model("ExtraFacility", extraFacilitySchema);

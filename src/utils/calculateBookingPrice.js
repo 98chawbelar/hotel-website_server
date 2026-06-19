@@ -9,45 +9,59 @@ const calculateBookingPrice = async ({
   if (!roomPrice) {
     throw new Error("Room Price is required");
   }
+
   const nights = Math.ceil(
     (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24),
   );
 
-  const subtotal = roomPrice * nights;
-
-  const config = await Price.findOne({ active: true });
-
-  let discount = 0;
-
-  if (nights >= 30) {
-    discount = subtotal * ((config?.monthlyDiscountPercent || 0) / 100);
-  } else if (nights >= 7) {
-    discount = subtotal * ((config?.weeklyDiscountPercent || 0) / 100);
+  if (nights <= 0) {
+    throw new Error("Invalid booking dates");
   }
 
-  const tax = subtotal * ((config?.taxPercent || 0) / 100);
+  const subtotal = roomPrice * nights;
 
-  const serviceFee = subtotal * ((config?.serviceFeePercent || 0) / 100);
+  const config = await Price.findOne({
+    active: true,
+  });
 
-  const totalPrice = subtotal + extrasTotal + tax + serviceFee - discount;
+  let weeklyDiscount = 0;
+  let monthlyDiscount = 0;
+
+  if (nights >= 30) {
+    monthlyDiscount = subtotal * ((config?.monthlyDiscountPercent || 0) / 100);
+  } else if (nights >= 7) {
+    weeklyDiscount = subtotal * ((config?.weeklyDiscountPercent || 0) / 100);
+  }
+
+  const discountedSubtotal = subtotal - weeklyDiscount - monthlyDiscount;
+
+  const taxAmount = discountedSubtotal * ((config?.taxPercent || 0) / 100);
+
+  const serviceFee =
+    discountedSubtotal * ((config?.serviceFeePercent || 0) / 100);
+
+  const totalPrice = discountedSubtotal + taxAmount + serviceFee + extrasTotal;
 
   return {
     nights,
+
     roomPrice,
 
     subtotal,
 
-    discount: Math.round(discount),
+    weeklyDiscount: Math.round(weeklyDiscount),
 
-    tax: Math.round(tax),
+    monthlyDiscount: Math.round(monthlyDiscount),
+
+    taxAmount: Math.round(taxAmount),
 
     serviceFee: Math.round(serviceFee),
 
-    extrasTotal,
+    extrasTotal: Math.round(extrasTotal),
 
     totalPrice: Math.round(totalPrice),
 
-    currency: config?.currency || "MMK",
+    currency: config?.currency || "Ks",
   };
 };
 

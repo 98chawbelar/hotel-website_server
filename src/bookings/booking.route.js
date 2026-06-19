@@ -6,8 +6,6 @@ const {
   getBookingsByEmail,
   getSingleBooking,
   updateBookingStatus,
-  deleteABooking,
-  cancelBooking,
   calculatePricePreview,
   getAllBookings,
 } = require("./booking.controller");
@@ -29,10 +27,10 @@ router.get("/:id", getSingleBooking);
 //Get Booking Status
 router.patch("/:id/status", updateBookingStatus);
 
-//Get Cancel Booking
-router.patch("/:id/cancel", cancelBooking);
+// //Get Cancel Booking
+// router.patch("/:id/cancel", cancelBooking);
 
-//Get DeleteBooking
-router.delete("/:id", deleteABooking);
+// //Get DeleteBooking
+// router.delete("/:id", deleteABooking);
 
 module.exports = router;

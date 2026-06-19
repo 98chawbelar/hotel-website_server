@@ -1,15 +1,22 @@
 const express = require("express");
+
 const router = express.Router();
 
 const {
   createExtraFacility,
   getAllExtraFacilities,
+  updateExtraFacility,
+  deleteExtraFacility,
 } = require("./extrafacility.controller");
 
-// Admin creates facility
-router.post("/", createExtraFacility);
+const verifyAdminToken = require("../middleware/verifyAdminToken");
 
-// Customer gets all facilities
+router.post("/", verifyAdminToken, createExtraFacility);
+
 router.get("/", getAllExtraFacilities);
+
+router.put("/:id", verifyAdminToken, updateExtraFacility);
+
+router.delete("/:id", verifyAdminToken, deleteExtraFacility);
 
 module.exports = router;

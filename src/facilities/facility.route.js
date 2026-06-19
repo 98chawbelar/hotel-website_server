@@ -9,14 +9,22 @@ const {
   deleteFacility,
 } = require("./facility.controller");
 
-router.post("/", createFacility);
+const verifyAdminToken = require("../middleware/verifyAdminToken");
+const upload = require("../middleware/upload");
+
+router.post("/", upload.array("images", 20), verifyAdminToken, createFacility);
 
 router.get("/", getAllFacilities);
 
-router.get("/:id", getSingleFacility);
+router.get("/:slug", getSingleFacility);
 
-router.put("/:id", updateFacility);
+router.put(
+  "/edit/:id",
+  upload.array("images", 20),
+  verifyAdminToken,
+  updateFacility,
+);
 
-router.delete("/:id", deleteFacility);
+router.delete("/:id", verifyAdminToken, deleteFacility);
 
 module.exports = router;

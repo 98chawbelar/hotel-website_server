@@ -1,45 +1,106 @@
 const ExtraFacility = require("./extrafacility.model");
 
-// Create Facility
+// Create
+
 const createExtraFacility = async (req, res) => {
   try {
-    const facility = new ExtraFacility(req.body);
-
-    const savedFacility = await facility.save();
+    const facility = await ExtraFacility.create(req.body);
 
     res.status(201).json({
       message: "Extra facility created successfully",
-      facility: savedFacility,
+
+      facility,
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
 
     res.status(500).json({
-      message: "Failed to create extra facility",
+      message: error.message,
     });
   }
 };
 
-// Get All Facilities
+// Get Customer List
+
 const getAllExtraFacilities = async (req, res) => {
   try {
     const facilities = await ExtraFacility.find({
       isActive: true,
-    }).sort({
-      createdAt: -1,
-    });
+    })
+      .sort({
+        order: 1,
+      })
+      .lean();
 
-    res.status(200).json(facilities);
+    res.json(facilities);
   } catch (error) {
-    console.error(error);
-
     res.status(500).json({
-      message: "Failed to fetch facilities",
+      message: error.message,
+    });
+  }
+};
+
+// Update
+
+const updateExtraFacility = async (req, res) => {
+  try {
+    const facility = await ExtraFacility.findByIdAndUpdate(
+      req.params.id,
+
+      req.body,
+
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!facility) {
+      return res.status(404).json({
+        message: "Not found",
+      });
+    }
+
+    res.json({
+      message: "Updated",
+
+      facility,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// Disable
+
+const deleteExtraFacility = async (req, res) => {
+  try {
+    await ExtraFacility.findByIdAndUpdate(
+      req.params.id,
+
+      {
+        isActive: false,
+      },
+    );
+
+    res.json({
+      message: "Extra facility disabled",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
     });
   }
 };
 
 module.exports = {
   createExtraFacility,
+
   getAllExtraFacilities,
+
+  updateExtraFacility,
+
+  deleteExtraFacility,
 };

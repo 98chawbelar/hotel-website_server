@@ -1,27 +1,50 @@
 const fs = require("fs");
 const path = require("path");
+const slugify = require("slugify");
 const Room = require("./room.model");
 
 // Create Room
 const postARoom = async (req, res) => {
   try {
-    const newRoom = new Room({
+    let capacity = {};
+
+    if (req.body.capacity) {
+      try {
+        capacity = JSON.parse(req.body.capacity);
+      } catch {
+        return res.status(400).json({
+          message: "Invalid capacity format",
+        });
+      }
+    }
+
+    const images =
+      req.files?.map((file, index) => ({
+        url: `${process.env.APP_URL}/uploads/${file.filename}`,
+        isPrimary: index === 0,
+      })) || [];
+
+    const room = await Room.create({
       ...req.body,
-      capacity: req.body.capacity,
-      image: req.file
-        ? `http://localhost:5000/uploads/${req.file.filename}`
-        : "",
+
+      slug: `${slugify(req.body.name, {
+        lower: true,
+        strict: true,
+      })}-${Date.now()}`,
+
+      capacity,
+
+      images,
     });
 
-    await newRoom.save();
-
-    res.status(200).send({
+    res.status(201).json({
       message: "Room created successfully",
-      room: newRoom,
+      room,
     });
   } catch (error) {
-    console.error("Error creating room", error);
-    res.status(500).send({
+    console.error(error);
+
+    res.status(500).json({
       message: "Failed to create room",
     });
   }
@@ -30,12 +53,47 @@ const postARoom = async (req, res) => {
 // Get All Rooms
 const getAllRooms = async (req, res) => {
   try {
-    const rooms = await Room.find().sort({ createdAt: -1 });
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 20);
 
-    res.status(200).send(rooms);
+    const query = {
+      isActive: true,
+    };
+
+    if (req.query.search) {
+      query.name = {
+        $regex: req.query.search,
+        $options: "i",
+      };
+    }
+
+    if (req.query.roomType) {
+      query.roomType = req.query.roomType;
+    }
+
+    const [rooms, total] = await Promise.all([
+      Room.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+
+      Room.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      rooms,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    console.error("Error fetching rooms", error);
-    res.status(500).send({
+    console.error(error);
+
+    res.status(500).json({
       message: "Failed to fetch rooms",
     });
   }
@@ -44,20 +102,22 @@ const getAllRooms = async (req, res) => {
 // Get Single Room
 const getSingleRoom = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const room = await Room.findById(id);
+    const room = await Room.findOne({
+      _id: req.params.id,
+      isActive: true,
+    }).lean();
 
     if (!room) {
-      return res.status(404).send({
-        message: "Room not found!",
+      return res.status(404).json({
+        message: "Room not found",
       });
     }
 
-    res.status(200).send(room);
+    res.status(200).json(room);
   } catch (error) {
-    console.error("Error fetching room", error);
-    res.status(500).send({
+    console.error(error);
+
+    res.status(500).json({
       message: "Failed to fetch room",
     });
   }
@@ -66,128 +126,90 @@ const getSingleRoom = async (req, res) => {
 // Update Room
 const updateRoom = async (req, res) => {
   try {
-    console.log("BODY =>", req.body);
-    console.log("FILE =>", req.file);
-    console.log("ID =>", req.params.id);
-
-    const { id } = req.params;
-
-    // old room
-    const room = await Room.findById(id);
+    const room = await Room.findById(req.params.id);
 
     if (!room) {
-      return res.status(404).send({
-        message: "Room not found!",
+      return res.status(404).json({
+        message: "Room not found",
       });
     }
 
-    // =========================
-    // DELETE OLD IMAGE
-    // =========================
-    if (req.file && room.image) {
-      const oldImagePath = path.join(
-        __dirname,
-        "../../uploads",
-        path.basename(room.image),
-      );
-
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
-    }
-
-    // =========================
-    // PARSE CAPACITY
-    // =========================
     let capacity = room.capacity;
 
     if (req.body.capacity) {
-      capacity = JSON.parse(req.body.capacity);
+      try {
+        capacity = JSON.parse(req.body.capacity);
+      } catch {
+        return res.status(400).json({
+          message: "Invalid capacity format",
+        });
+      }
     }
 
-    // =========================
-    // IMAGE URL
-    // =========================
-    const image = req.file
-      ? `http://localhost:5000/uploads/${req.file.filename}`
-      : room.image;
+    let images = room.images;
 
-    // =========================
-    // UPDATE DATA
-    // =========================
+    if (req.files?.length) {
+      images = req.files.map((file, index) => ({
+        url: `${process.env.APP_URL}/uploads/${file.filename}`,
+        isPrimary: index === 0,
+      }));
+    }
+
     const updatedRoom = await Room.findByIdAndUpdate(
-      id,
+      req.params.id,
       {
-        name: req.body.name,
-        category: req.body.category,
-        description: req.body.description,
-        location: req.body.location,
-        price: Number(req.body.price),
-        beds: Number(req.body.beds),
-        size: req.body.size,
-        status: req.body.status,
+        ...req.body,
         capacity,
-        image,
+        images,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.status(200).json({
+      message: "Room updated successfully",
+      room: updatedRoom,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to update room",
+    });
+  }
+};
+
+// Soft Delete Room
+const deleteARoom = async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+
+    if (!room) {
+      return res.status(404).json({
+        message: "Room not found",
+      });
+    }
+
+    await Room.findByIdAndUpdate(
+      req.params.id,
+      {
+        isActive: false,
       },
       {
         new: true,
       },
     );
 
-    res.status(200).send({
-      message: "Room updated successfully",
-      room: updatedRoom,
+    res.status(200).json({
+      message: "Room archived successfully",
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
-    res.status(500).send({
-      message: "Failed to update room",
-    });
-  }
-};
-
-// Delete Room
-const deleteARoom = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const room = await Room.findById(id);
-
-    if (!room) {
-      return res.status(404).send({
-        message: "Room not found!",
-      });
-    }
-
-    // =========================
-    // DELETE IMAGE FILE
-    // =========================
-    if (room.image) {
-      const imagePath = path.join(
-        __dirname,
-        "../../uploads",
-        path.basename(room.image),
-      );
-
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
-
-    // =========================
-    // DELETE ROOM
-    // =========================
-    await Room.findByIdAndDelete(id);
-
-    res.status(200).send({
-      message: "Room deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting room", error);
-
-    res.status(500).send({
-      message: "Failed to delete room",
+    res.status(500).json({
+      message: "Failed to archive room",
     });
   }
 };

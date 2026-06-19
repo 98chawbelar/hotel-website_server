@@ -1,48 +1,66 @@
 const Facility = require("./facility.model");
 
-// Create Facility
+// CREATE
+
 const createFacility = async (req, res) => {
   try {
-    const newFacility = new Facility(req.body);
+    const images = req.files ? req.files.map((file) => file.filename) : [];
 
-    const savedFacility = await newFacility.save();
+    const facility = await Facility.create({
+      name: req.body.name,
+
+      description: req.body.description,
+
+      link: req.body.link || "",
+
+      order: Number(req.body.order || 0),
+
+      images,
+    });
 
     res.status(201).json({
       message: "Facility created successfully",
-      facility: savedFacility,
+
+      facility,
     });
   } catch (error) {
-    console.error("Error creating facility:", error);
+    console.log(error);
 
     res.status(500).json({
-      message: "Failed to create facility",
+      message: error.message,
     });
   }
 };
 
-// Get All Facilities
+// GET ALL
+
 const getAllFacilities = async (req, res) => {
   try {
-    const facilities = await Facility.find().sort({
-      createdAt: -1,
-    });
+    const facilities = await Facility.find({
+      isActive: true,
+    })
+      .sort({
+        order: 1,
+      })
+      .lean();
 
-    res.status(200).json(facilities);
+    res.json(facilities);
   } catch (error) {
-    console.error("Error fetching facilities:", error);
-
     res.status(500).json({
-      message: "Failed to fetch facilities",
+      message: error.message,
     });
   }
 };
 
-// Get Single Facility
+// SINGLE
+
 const getSingleFacility = async (req, res) => {
   try {
-    const { id } = req.params;
+    const facility = await Facility.findOne({
+      slug: req.params.slug,
 
-    const facility = await Facility.findById(id);
+      isActive: true,
+    });
 
     if (!facility) {
       return res.status(404).json({
@@ -50,75 +68,86 @@ const getSingleFacility = async (req, res) => {
       });
     }
 
-    res.status(200).json(facility);
+    res.json(facility);
   } catch (error) {
-    console.error("Error fetching facility:", error);
-
     res.status(500).json({
-      message: "Failed to fetch facility",
+      message: error.message,
     });
   }
 };
 
-// Update Facility
+// UPDATE
+
 const updateFacility = async (req, res) => {
   try {
-    const { id } = req.params;
+    const updateData = {
+      name: req.body.name,
 
-    const updatedFacility = await Facility.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+      description: req.body.description,
 
-    if (!updatedFacility) {
-      return res.status(404).json({
-        message: "Facility not found",
-      });
+      link: req.body.link,
+
+      order: Number(req.body.order || 0),
+    };
+
+    if (req.files && req.files.length) {
+      updateData.images = req.files.map((file) => file.filename);
     }
 
-    res.status(200).json({
-      message: "Facility updated successfully",
-      facility: updatedFacility,
+    const facility = await Facility.findByIdAndUpdate(
+      req.params.id,
+
+      updateData,
+
+      {
+        new: true,
+
+        runValidators: true,
+      },
+    );
+
+    res.json({
+      message: "Facility updated",
+
+      facility,
     });
   } catch (error) {
-    console.error("Error updating facility:", error);
-
     res.status(500).json({
-      message: "Failed to update facility",
+      message: error.message,
     });
   }
 };
 
-// Delete Facility
+// DELETE
+
 const deleteFacility = async (req, res) => {
   try {
-    const { id } = req.params;
+    await Facility.findByIdAndUpdate(
+      req.params.id,
 
-    const deletedFacility = await Facility.findByIdAndDelete(id);
+      {
+        isActive: false,
+      },
+    );
 
-    if (!deletedFacility) {
-      return res.status(404).json({
-        message: "Facility not found",
-      });
-    }
-
-    res.status(200).json({
-      message: "Facility deleted successfully",
-      facility: deletedFacility,
+    res.json({
+      message: "Facility disabled",
     });
   } catch (error) {
-    console.error("Error deleting facility:", error);
-
     res.status(500).json({
-      message: "Failed to delete facility",
+      message: error.message,
     });
   }
 };
 
 module.exports = {
   createFacility,
+
   getAllFacilities,
+
   getSingleFacility,
+
   updateFacility,
+
   deleteFacility,
 };

@@ -1,20 +1,31 @@
 const mongoose = require("mongoose");
+const slugify = require("slugify");
 
 const facilitySchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
+      trim: true,
     },
 
-    image: {
+    slug: {
       type: String,
-      required: true,
+      unique: true,
     },
+
+    // store multiple local image paths
+    images: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
 
     description: {
       type: String,
       required: true,
+      maxlength: 500,
     },
 
     link: {
@@ -22,14 +33,31 @@ const facilitySchema = new mongoose.Schema(
       default: "",
     },
 
+    order: {
+      type: Number,
+      default: 0,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
     },
   },
+
   {
     timestamps: true,
   },
 );
-const Facility = mongoose.model("Facility", facilitySchema);
-module.exports = Facility;
+
+// auto create slug
+
+facilitySchema.pre("save", function (next) {
+  if (this.isModified("name")) {
+    this.slug = slugify(this.name, {
+      lower: true,
+      strict: true,
+    });
+  }
+});
+
+module.exports = mongoose.model("Facility", facilitySchema);

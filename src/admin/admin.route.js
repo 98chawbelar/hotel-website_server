@@ -11,6 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET_KEY;
 // ================= REGISTER ADMIN =================
 router.post("/register", async (req, res) => {
   try {
+    console.log("REGISTER BODY", req.body);
     const { username, password } = req.body;
 
     const existingUser = await User.findOne({

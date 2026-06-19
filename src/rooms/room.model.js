@@ -2,37 +2,108 @@ const mongoose = require("mongoose");
 
 const roomSchema = new mongoose.Schema(
   {
-    name: String,
-    description: String,
-    location: String,
-    image: String,
-    price: Number,
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    slug: {
+      type: String,
+      unique: true,
+    },
+
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    location: {
+      type: String,
+      default: "",
+    },
+
+    images: [
+      {
+        type: String,
+      },
+    ],
+
+    basePrice: {
+      type: Number,
+      required: true,
+    },
+
+    priceConfig: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Price",
+    },
+
+    roomNumber: {
+      type: String,
+      unique: true,
+    },
+
+    roomType: {
+      type: String,
+      enum: ["single", "double", "suite", "deluxe", "family"],
+      required: true,
+    },
+
     status: {
       type: String,
-      enum: ["available", "reserved"],
+      enum: ["available", "reserved", "maintenance", "cleaning"],
       default: "available",
     },
+
     capacity: {
-      adults: Number,
-      child: Number,
+      adults: {
+        type: Number,
+        required: true,
+        min: 1,
+      },
+
+      child: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
     },
 
-    checkIn: String,
-    checkOut: String,
+    checkIn: {
+      type: String,
+    },
 
-    beds: Number,
-    size: String,
+    checkOut: {
+      type: String,
+    },
+
+    beds: {
+      type: Number,
+      default: 1,
+    },
+
+    size: {
+      type: String,
+    },
 
     facilities: [
       {
-        title: String,
+        title: {
+          type: String,
+        },
       },
     ],
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-const Room = mongoose.model("Room", roomSchema);
-module.exports = Room;
+module.exports = mongoose.model("Room", roomSchema);
