@@ -19,7 +19,7 @@ const revenueSchema = new mongoose.Schema(
 
     currency: {
       type: String,
-      default: "MMK",
+      default: "Ks",
     },
 
     paymentMethod: String,
