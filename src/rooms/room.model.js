@@ -47,7 +47,13 @@ const roomSchema = new mongoose.Schema(
 
     roomType: {
       type: String,
-      enum: ["single", "double", "suite", "deluxe", "family"],
+      enum: [
+        "superior king",
+        "superior twin",
+        "deluxe king",
+        "deluxe twin",
+        "family",
+      ],
       required: true,
     },
 
@@ -88,13 +94,10 @@ const roomSchema = new mongoose.Schema(
       type: String,
     },
 
-    facilities: [
-      {
-        title: {
-          type: String,
-        },
-      },
-    ],
+    facilitiesConfig: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Facilities",
+    },
 
     isActive: {
       type: Boolean,

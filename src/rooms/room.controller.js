@@ -19,10 +19,9 @@ const postARoom = async (req, res) => {
     }
 
     const images =
-      req.files?.map((file, index) => ({
-        url: `${process.env.APP_URL}/uploads/${file.filename}`,
-        isPrimary: index === 0,
-      })) || [];
+      req.files?.map((file) => {
+        return `${process.env.APP_URL}/uploads/${file.filename}`;
+      }) || [];
 
     const room = await Room.create({
       ...req.body,
@@ -149,10 +148,9 @@ const updateRoom = async (req, res) => {
     let images = room.images;
 
     if (req.files?.length) {
-      images = req.files.map((file, index) => ({
-        url: `${process.env.APP_URL}/uploads/${file.filename}`,
-        isPrimary: index === 0,
-      }));
+      images = req.files.map((file) => {
+        return `${process.env.APP_URL}/uploads/${file.filename}`;
+      });
     }
 
     const updatedRoom = await Room.findByIdAndUpdate(
