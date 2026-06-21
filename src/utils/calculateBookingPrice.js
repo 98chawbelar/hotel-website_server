@@ -20,25 +20,37 @@ const calculateBookingPrice = async ({
 
   const subtotal = roomPrice * nights;
 
-  const config = await Price.findOne({
+  let config = await Price.findOne({
     active: true,
   });
+
+  // fallback price settings
+  if (!config) {
+    config = {
+      currency: "Ks",
+      weeklyDiscountPercent: 5,
+      monthlyDiscountPercent: 10,
+      taxPercent: 0,
+      serviceFeePercent: 0,
+    };
+  }
+
+  console.log("PRICE CONFIG:", config);
 
   let weeklyDiscount = 0;
   let monthlyDiscount = 0;
 
   if (nights >= 30) {
-    monthlyDiscount = subtotal * ((config?.monthlyDiscountPercent || 0) / 100);
+    monthlyDiscount = subtotal * (config.monthlyDiscountPercent / 100);
   } else if (nights >= 7) {
-    weeklyDiscount = subtotal * ((config?.weeklyDiscountPercent || 0) / 100);
+    weeklyDiscount = subtotal * (config.weeklyDiscountPercent / 100);
   }
 
   const discountedSubtotal = subtotal - weeklyDiscount - monthlyDiscount;
 
-  const taxAmount = discountedSubtotal * ((config?.taxPercent || 0) / 100);
+  const taxAmount = discountedSubtotal * (config.taxPercent / 100);
 
-  const serviceFee =
-    discountedSubtotal * ((config?.serviceFeePercent || 0) / 100);
+  const serviceFee = discountedSubtotal * (config.serviceFeePercent / 100);
 
   const totalPrice = discountedSubtotal + taxAmount + serviceFee + extrasTotal;
 
@@ -61,7 +73,7 @@ const calculateBookingPrice = async ({
 
     totalPrice: Math.round(totalPrice),
 
-    currency: config?.currency || "Ks",
+    currency: config.currency,
   };
 };
 

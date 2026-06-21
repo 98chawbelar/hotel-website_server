@@ -67,7 +67,7 @@ const bookingSchema = new mongoose.Schema(
         min: 1,
       },
 
-      children: {
+      child: {
         type: Number,
         default: 0,
         min: 0,
@@ -105,7 +105,14 @@ const bookingSchema = new mongoose.Schema(
         type: Number,
         required: true,
       },
-
+      weeklyDiscount: {
+        type: Number,
+        default: 0,
+      },
+      monthlyDiscount: {
+        type: Number,
+        default: 0,
+      },
       discountPercent: {
         type: Number,
         default: 0,

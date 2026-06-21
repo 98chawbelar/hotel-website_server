@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const calculateBookingPrice = require("../utils/calculateBookingPrice");
 const Booking = require("./booking.model");
 const Room = require("../rooms/room.model");
+const Revenue = require("../revenue/revenue.model");
 
 // Check Room Availability
 const isRoomAvailable = async (roomId, checkIn, checkOut, session = null) => {
@@ -145,7 +146,12 @@ const createABooking = async (req, res) => {
       pricing: {
         roomPrice: pricing.roomPrice,
 
-        discountAmount: pricing.discountAmount || 0,
+        weeklyDiscount: pricing.weeklyDiscount || 0,
+
+        monthlyDiscount: pricing.monthlyDiscount || 0,
+
+        discountAmount:
+          (pricing.weeklyDiscount || 0) + (pricing.monthlyDiscount || 0),
 
         taxAmount: pricing.taxAmount || 0,
 
@@ -301,15 +307,31 @@ const updateBookingStatus = async (req, res) => {
 
     booking.statusHistory.push({
       status: req.body.bookingStatus,
-
       changedAt: new Date(),
     });
 
     await booking.save();
 
+    // Create revenue when booking is confirmed
+    if (req.body.bookingStatus === "confirmed") {
+      const existingRevenue = await Revenue.findOne({
+        booking: booking._id,
+      });
+
+      if (!existingRevenue) {
+        await Revenue.create({
+          booking: booking._id,
+          room: booking.room,
+          amount: booking.pricing.totalPrice,
+          paymentMethod: booking.payment?.method,
+          status: "completed",
+          type: "booking_payment",
+        });
+      }
+    }
+
     res.json({
       message: "Status updated",
-
       booking,
     });
   } catch (error) {
