@@ -10,37 +10,33 @@ const extraFacilitySchema = new mongoose.Schema(
       trim: true,
     },
 
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    description: {
-      type: String,
-      default: "",
-    },
-
-    image: {
-      type: String,
-      default: "",
-    },
-
     icon: {
       type: String,
       default: "",
     },
 
-    pricingType: {
+    label: {
       type: String,
-      enum: ["per_booking", "per_night", "per_person"],
-      default: "per_booking",
+      required: true,
+      trim: true,
+    },
+
+    desc: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     price: {
       type: Number,
       required: true,
       min: 0,
+    },
+
+    pricingType: {
+      type: String,
+      enum: ["per_booking", "per_night", "per_person"],
+      default: "per_booking",
     },
 
     maxQuantity: {

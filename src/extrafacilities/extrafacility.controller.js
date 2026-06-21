@@ -21,7 +21,6 @@ const createExtraFacility = async (req, res) => {
 };
 
 // Get Customer List
-
 const getAllExtraFacilities = async (req, res) => {
   try {
     const facilities = await ExtraFacility.find({
