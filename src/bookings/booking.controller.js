@@ -3,6 +3,7 @@ const calculateBookingPrice = require("../utils/calculateBookingPrice");
 const Booking = require("./booking.model");
 const Room = require("../rooms/room.model");
 const Revenue = require("../revenue/revenue.model");
+const sendBookingConfirmation = require("../services/bookingEmail.service");
 
 // Check Room Availability
 const isRoomAvailable = async (roomId, checkIn, checkOut, session = null) => {
@@ -292,6 +293,19 @@ const getSingleBooking = async (req, res) => {
   }
 };
 
+// Get Booking By Code
+const getBookingByCode = async (req, res) => {
+  const booking = await Booking.findOne({
+    bookingCode: req.params.code,
+  }).populate("room");
+  if (!booking) {
+    return res.status(404).json({
+      message: "Booking not found",
+    });
+  }
+  res.json(booking);
+};
+
 // Update Status
 const updateBookingStatus = async (req, res) => {
   try {
@@ -321,13 +335,23 @@ const updateBookingStatus = async (req, res) => {
       if (!existingRevenue) {
         await Revenue.create({
           booking: booking._id,
+
           room: booking.room,
+
           amount: booking.pricing.totalPrice,
+
           paymentMethod: booking.payment?.method,
+
           status: "completed",
+
           type: "booking_payment",
         });
       }
+
+      // populate room for email
+      const emailBooking = await Booking.findById(booking._id).populate("room");
+
+      await sendBookingConfirmation(emailBooking);
     }
 
     res.json({
@@ -349,6 +373,8 @@ module.exports = {
   getAllBookings,
 
   getBookingsByEmail,
+
+  getBookingByCode,
 
   getSingleBooking,
 

@@ -8,6 +8,7 @@ const {
   updateBookingStatus,
   calculatePricePreview,
   getAllBookings,
+  getBookingByCode,
 } = require("./booking.controller");
 
 router.post("/price-preview", calculatePricePreview);
@@ -21,16 +22,13 @@ router.get("/", getAllBookings);
 // Get Booking By Email
 router.get("/email/:email", getBookingsByEmail);
 
+// Get Booking By Code
+router.get("/code/:code", getBookingByCode);
+
 // Get Single Booking Data
 router.get("/:id", getSingleBooking);
 
 //Get Booking Status
 router.patch("/:id/status", updateBookingStatus);
-
-// //Get Cancel Booking
-// router.patch("/:id/cancel", cancelBooking);
-
-// //Get DeleteBooking
-// router.delete("/:id", deleteABooking);
 
 module.exports = router;
