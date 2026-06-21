@@ -1,26 +1,39 @@
 const express = require("express");
-const Room = require("./room.model");
 const upload = require("../middleware/upload");
+
+const verifyAdminToken = require("../middleware/verifyAdminToken");
+
 const {
   postARoom,
   getAllRooms,
   getSingleRoom,
   updateRoom,
   deleteARoom,
+  getArchivedRooms,
+  restoreRoom,
+  permanentDeleteRoom,
 } = require("./room.controller");
-const verifyAdminToken = require("../middleware/verifyAdminToken");
+
 const router = express.Router();
 
-// post a room
-router.post("/create-room", upload.array("images", 20), postARoom);
+// Create Room
+router.post(
+  "/create-room",
+  verifyAdminToken,
+  upload.array("images", 20),
+  postARoom,
+);
 
-// get all rooms
+// Get All Rooms
 router.get("/", getAllRooms);
 
-// single room endpoint
+// Archived Rooms
+router.get("/archived/all", verifyAdminToken, getArchivedRooms);
+
+// Get Single Room
 router.get("/:id", getSingleRoom);
 
-// update a room endpoint
+// Update Rooms
 router.put(
   "/edit/:id",
   verifyAdminToken,
@@ -28,7 +41,12 @@ router.put(
   updateRoom,
 );
 
-// delete a room endpoint
+// Soft Delete Rooms
 router.delete("/:id", verifyAdminToken, deleteARoom);
+
+// Restore Archived Rooms
+router.patch("/restore/:id", verifyAdminToken, restoreRoom);
+// Permanent Delete Rooms
+router.delete("/permanent-delete/:id", verifyAdminToken, permanentDeleteRoom);
 
 module.exports = router;

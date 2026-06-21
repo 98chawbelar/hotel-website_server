@@ -48,11 +48,11 @@ const roomSchema = new mongoose.Schema(
     roomType: {
       type: String,
       enum: [
-        "superior king",
-        "superior twin",
-        "deluxe king",
-        "deluxe twin",
-        "family",
+        "Superior King",
+        "Superior Twin",
+        "Deluxe King",
+        "Deluxe Twin",
+        "Family",
       ],
       required: true,
     },

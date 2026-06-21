@@ -1,140 +1,122 @@
 const Facility = require("./facility.model");
 
-// CREATE
-
+// CREATE FACILITY
 const createFacility = async (req, res) => {
   try {
-    const images = req.files ? req.files.map((file) => file.filename) : [];
+    const images =
+      req.files && req.files.length
+        ? req.files.map((file) => file.filename)
+        : [];
 
-    const facility = await Facility.create({
+    const newFacility = await Facility.create({
       name: req.body.name,
-
       description: req.body.description,
-
       link: req.body.link || "",
-
-      order: Number(req.body.order || 0),
-
+      order: Number(req.body.order) || 0,
       images,
+      isActive: true,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
+      success: true,
       message: "Facility created successfully",
-
-      facility,
+      data: newFacility,
     });
   } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// GET ALL
-
+// GET ALL FACILITIES
 const getAllFacilities = async (req, res) => {
   try {
-    const facilities = await Facility.find({
-      isActive: true,
-    })
-      .sort({
-        order: 1,
-      })
+    const facilities = await Facility.find({ isActive: true })
+      .sort({ order: 1 })
       .lean();
 
-    res.json(facilities);
+    return res.status(200).json({
+      success: true,
+      message: "Facilities fetched successfully",
+      data: facilities,
+    });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// SINGLE
-
+// GET SINGLE FACILITY (by slug)
 const getSingleFacility = async (req, res) => {
   try {
     const facility = await Facility.findOne({
       slug: req.params.slug,
-
       isActive: true,
-    });
+    }).lean();
 
     if (!facility) {
       return res.status(404).json({
+        success: false,
         message: "Facility not found",
       });
     }
 
-    res.json(facility);
+    return res.status(200).json({
+      success: true,
+      message: "Facility fetched successfully",
+      data: facility,
+    });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// UPDATE
-
+// UPDATE FACILITY
 const updateFacility = async (req, res) => {
   try {
     const updateData = {
       name: req.body.name,
-
       description: req.body.description,
-
-      link: req.body.link,
-
-      order: Number(req.body.order || 0),
+      link: req.body.link || "",
+      order: Number(req.body.order) || 0,
     };
 
-    if (req.files && req.files.length) {
+    // replace images only if new files uploaded
+    if (req.files && req.files.length > 0) {
       updateData.images = req.files.map((file) => file.filename);
     }
 
-    const facility = await Facility.findByIdAndUpdate(
+    const updatedFacility = await Facility.findByIdAndUpdate(
       req.params.id,
-
       updateData,
-
       {
         new: true,
-
         runValidators: true,
       },
     );
 
-    res.json({
-      message: "Facility updated",
+    if (!updatedFacility) {
+      return res.status(404).json({
+        success: false,
+        message: "Facility not found",
+      });
+    }
 
-      facility,
+    return res.status(200).json({
+      success: true,
+      message: "Facility updated successfully",
+      data: updatedFacility,
     });
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-
-// DELETE
-
-const deleteFacility = async (req, res) => {
-  try {
-    await Facility.findByIdAndUpdate(
-      req.params.id,
-
-      {
-        isActive: false,
-      },
-    );
-
-    res.json({
-      message: "Facility disabled",
-    });
-  } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
@@ -142,12 +124,7 @@ const deleteFacility = async (req, res) => {
 
 module.exports = {
   createFacility,
-
   getAllFacilities,
-
   getSingleFacility,
-
   updateFacility,
-
-  deleteFacility,
 };

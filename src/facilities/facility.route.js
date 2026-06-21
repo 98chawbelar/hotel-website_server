@@ -6,7 +6,6 @@ const {
   getAllFacilities,
   getSingleFacility,
   updateFacility,
-  deleteFacility,
 } = require("./facility.controller");
 
 const verifyAdminToken = require("../middleware/verifyAdminToken");
@@ -24,7 +23,5 @@ router.put(
   verifyAdminToken,
   updateFacility,
 );
-
-router.delete("/:id", verifyAdminToken, deleteFacility);
 
 module.exports = router;
