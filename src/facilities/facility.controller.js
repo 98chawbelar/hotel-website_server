@@ -3,10 +3,9 @@ const Facility = require("./facility.model");
 // CREATE FACILITY
 const createFacility = async (req, res) => {
   try {
-    const images =
-      req.files && req.files.length
-        ? req.files.map((file) => file.filename)
-        : [];
+    images = req.files.map((file) => {
+      return `/uploads/${file.filename}`;
+    });
 
     const newFacility = await Facility.create({
       name: req.body.name,
