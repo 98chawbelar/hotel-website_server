@@ -9,26 +9,25 @@ const {
   calculatePricePreview,
   getAllBookings,
   getBookingByCode,
+  cancelBooking,
+  deleteBooking,
+  resendBookingEmail,
 } = require("./booking.controller");
 
 router.post("/price-preview", calculatePricePreview);
 
 // Create Booking
 router.post("/", createABooking);
+router.post("/:id/resend-email", resendBookingEmail);
 
 //Get All Bookings
 router.get("/", getAllBookings);
-
-// Get Booking By Email
 router.get("/email/:email", getBookingsByEmail);
-
-// Get Booking By Code
 router.get("/code/:code", getBookingByCode);
-
-// Get Single Booking Data
 router.get("/:id", getSingleBooking);
 
-//Get Booking Status
 router.patch("/:id/status", updateBookingStatus);
+router.patch("/:id/cancel", cancelBooking);
+router.delete("/:id", deleteBooking);
 
 module.exports = router;

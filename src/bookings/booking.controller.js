@@ -312,22 +312,40 @@ const updateBookingStatus = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-      return res.status(404).json({
-        message: "Booking not found",
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const { bookingStatus, paymentStatus } = req.body;
+
+    //  1. booking status
+    if (bookingStatus) {
+      booking.bookingStatus = bookingStatus;
+
+      booking.statusHistory.push({
+        status: bookingStatus,
+        changedAt: new Date(),
       });
     }
 
-    booking.bookingStatus = req.body.bookingStatus;
+    // ✅ 2. payment status (IMPORTANT FIX)
+    if (paymentStatus) {
+      booking.payment.status = paymentStatus;
 
-    booking.statusHistory.push({
-      status: req.body.bookingStatus,
-      changedAt: new Date(),
-    });
+      if (paymentStatus === "paid") {
+        booking.payment.paidAt = new Date();
+      }
+    }
 
     await booking.save();
 
-    // Create revenue when booking is confirmed
-    if (req.body.bookingStatus === "confirmed") {
+    const populatedBooking = await Booking.findById(booking._id).populate(
+      "room",
+    );
+    let emailSent = false;
+    let emailMessage = "Email Not Triggered!";
+
+    // ✅ EMAIL ONLY AFTER PAID
+    if (paymentStatus === "paid") {
       const existingRevenue = await Revenue.findOne({
         booking: booking._id,
       });
@@ -335,48 +353,120 @@ const updateBookingStatus = async (req, res) => {
       if (!existingRevenue) {
         await Revenue.create({
           booking: booking._id,
-
           room: booking.room,
-
           amount: booking.pricing.totalPrice,
-
-          paymentMethod: booking.payment?.method,
-
+          paymentMethod: booking.payment.method,
           status: "completed",
-
           type: "booking_payment",
         });
       }
 
-      // populate room for email
-      const emailBooking = await Booking.findById(booking._id).populate("room");
-
-      await sendBookingConfirmation(emailBooking);
+      await sendBookingConfirmation(populatedBooking);
+      emailSent = true;
+      emailMessage = "Email Sent Successfully";
+    } else {
+      emailMessage = "Email not sent: payment not marked as paid";
     }
 
     res.json({
-      message: "Status updated",
+      message: "Booking updated successfully",
+      booking: populatedBooking,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Cancel Booking (Soft Cancel - using existing schema)
+const cancelBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.bookingStatus === "cancelled") {
+      return res.status(400).json({ message: "Already cancelled" });
+    }
+
+    booking.bookingStatus = "cancelled";
+
+    booking.cancellation = {
+      reason: req.body.reason || "Cancelled by admin/user",
+      cancelledAt: new Date(),
+      cancelledBy: req.body.cancelledBy || "admin",
+      refundAmount: req.body.refundAmount || 0,
+    };
+
+    booking.statusHistory.push({
+      status: "cancelled",
+      changedAt: new Date(),
+    });
+
+    await booking.save();
+
+    res.json({
+      message: "Booking cancelled successfully",
       booking,
     });
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const resendBookingEmail = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate("room");
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.payment.status !== "paid") {
+      return res.status(400).json({
+        message: "Email can only be sent after payment",
+      });
+    }
+
+    await sendBookingConfirmation(booking);
+
+    res.json({
+      message: "Email resent successfully",
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Hard Delete Booking (Admin only)
+const deleteBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    await Booking.findByIdAndDelete(req.params.id);
+
+    res.json({
+      message: "Booking permanently deleted",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
 module.exports = {
   createABooking,
-
   calculatePricePreview,
-
   getAllBookings,
-
   getBookingsByEmail,
-
   getBookingByCode,
-
   getSingleBooking,
-
+  resendBookingEmail,
   updateBookingStatus,
+  cancelBooking,
+  deleteBooking,
 };

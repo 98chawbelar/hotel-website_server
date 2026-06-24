@@ -1,118 +1,77 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 const sendBookingConfirmation = async (booking) => {
   try {
-    const confirmationLink = `${process.env.CLIENT_PORT}/confirmation/${booking.bookingCode}`;
+    const userdashboardLink = `${process.env.CLIENT_URL}/userdashboard`;
 
-    await resend.emails.send({
-      from: "Kandaw101 Hotel <onboarding@resend.dev>",
-
+    const mailOptions = {
+      from: `"Kandaw101 Hotel" <${process.env.EMAIL_USER}>`,
       to: booking.guest.email,
-
       subject: "Booking Confirmed - Kandaw101 Hotel",
 
       html: `
+        <div style="font-family:Arial;padding:30px">
+          <h2>Booking Confirmed Successfully 🎉</h2>
 
-      <div style="font-family:Arial;padding:30px">
+          <p>
+            Dear ${booking.guest.firstName} ${booking.guest.lastName},
+          </p>
 
-        <h2>
-          Booking Confirmed Successfully 🎉
-        </h2>
+          <p>Your booking has been confirmed.</p>
 
+          <p><b>Booking Code:</b> ${booking.bookingCode}</p>
+          <p><b>Room:</b> ${booking.room?.name}</p>
 
-        <p>
-          Dear ${booking.guest.firstName}
-          ${booking.guest.lastName},
-        </p>
+          <p>
+            <b>Check In:</b>
+            ${new Date(booking.stay.checkIn).toLocaleDateString()}
+          </p>
 
+          <p>
+            <b>Check Out:</b>
+            ${new Date(booking.stay.checkOut).toLocaleDateString()}
+          </p>
 
-        <p>
-          Your hotel booking has been confirmed.
-        </p>
+          <p>
+            <b>Total:</b>
+            ${booking.pricing.totalPrice} ${booking.pricing.currency}
+          </p>
 
+          <br/>
 
+          <a
+            href="${userdashboardLink}"
+            style="
+              background:#2563eb;
+              color:white;
+              padding:12px 20px;
+              border-radius:8px;
+              text-decoration:none;
+            "
+          >
+            View Booking Details
+          </a>
 
-        <h3>
-          Booking Information
-        </h3>
+          <br/><br/>
 
-
-        <p>
-          <b>Booking Code:</b>
-          ${booking.bookingCode}
-        </p>
-
-
-        <p>
-          <b>Room:</b>
-          ${booking.room?.name}
-        </p>
-
-
-        <p>
-          <b>Room Number:</b>
-          ${booking.room?.roomNumber || "Assigned"}
-        </p>
-
-
-        <p>
-          <b>Check In:</b>
-          ${new Date(booking.stay.checkIn).toLocaleDateString()}
-        </p>
-
-
-        <p>
-          <b>Check Out:</b>
-          ${new Date(booking.stay.checkOut).toLocaleDateString()}
-        </p>
-
-
-        <p>
-          <b>Total:</b>
-          ${booking.pricing.totalPrice}
-          ${booking.pricing.currency}
-        </p>
-
-
-
-        <br/>
-
-
-        <a
-        href="${confirmationLink}"
-        style="
-        background:#2563eb;
-        color:white;
-        padding:12px 20px;
-        border-radius:8px;
-        text-decoration:none;
-        "
-        >
-
-        View Booking Details
-
-        </a>
-
-
-
-        <br/><br/>
-
-
-        <p>
-          Thank you for choosing Kandaw101 Hotel.
-        </p>
-
-
-      </div>
-
+          <p>Thank you for choosing Kandaw101 Hotel.</p>
+        </div>
       `,
-    });
+    };
 
-    console.log("Confirmation email sent:", booking.guest.email);
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("Email sent:", info.response);
   } catch (error) {
-    console.error("Email Error:", error.message);
+    console.error("Email Error:", error);
   }
 };
 
