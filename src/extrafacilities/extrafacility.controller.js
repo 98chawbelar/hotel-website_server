@@ -4,12 +4,12 @@ const ExtraFacility = require("./extrafacility.model");
 
 const createExtraFacility = async (req, res) => {
   try {
-    const facility = await ExtraFacility.create(req.body);
+    const extrafacility = await ExtraFacility.create(req.body);
 
     res.status(201).json({
       message: "Extra facility created successfully",
 
-      facility,
+      extrafacility,
     });
   } catch (error) {
     console.log(error);
@@ -23,7 +23,7 @@ const createExtraFacility = async (req, res) => {
 // Get Customer List
 const getAllExtraFacilities = async (req, res) => {
   try {
-    const facilities = await ExtraFacility.find({
+    const extrafacilities = await ExtraFacility.find({
       isActive: true,
     })
       .sort({
@@ -31,7 +31,7 @@ const getAllExtraFacilities = async (req, res) => {
       })
       .lean();
 
-    res.json(facilities);
+    res.json(extrafacilities);
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -43,7 +43,7 @@ const getAllExtraFacilities = async (req, res) => {
 
 const updateExtraFacility = async (req, res) => {
   try {
-    const facility = await ExtraFacility.findByIdAndUpdate(
+    const extrafacility = await ExtraFacility.findByIdAndUpdate(
       req.params.id,
 
       req.body,
@@ -54,7 +54,7 @@ const updateExtraFacility = async (req, res) => {
       },
     );
 
-    if (!facility) {
+    if (!extrafacility) {
       return res.status(404).json({
         message: "Not found",
       });
@@ -63,7 +63,7 @@ const updateExtraFacility = async (req, res) => {
     res.json({
       message: "Updated",
 
-      facility,
+      extrafacility,
     });
   } catch (error) {
     res.status(500).json({

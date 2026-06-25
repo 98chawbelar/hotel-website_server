@@ -13,6 +13,8 @@ const createFacility = async (req, res) => {
       link: req.body.link || "",
       order: Number(req.body.order) || 0,
       images,
+      price: Number(req.body.price) || 0,
+      pricingType: req.body.pricingType || "per_booking",
       isActive: true,
     });
 
@@ -85,6 +87,8 @@ const updateFacility = async (req, res) => {
       description: req.body.description,
       link: req.body.link || "",
       order: Number(req.body.order) || 0,
+      price: Number(req.body.price) || 0,
+      pricingType: req.body.pricingType || "per_booking",
     };
 
     // replace images only if new files uploaded

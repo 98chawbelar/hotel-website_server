@@ -21,6 +21,17 @@ const facilitySchema = new mongoose.Schema(
         required: true,
       },
     ],
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    pricingType: {
+      type: String,
+      enum: ["per_booking", "per_night", "per_person"],
+      default: "per_booking",
+    },
 
     description: {
       type: String,
