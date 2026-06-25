@@ -5,7 +5,7 @@ const Room = require("../rooms/room.model");
 const Revenue = require("../revenue/revenue.model");
 const sendBookingConfirmation = require("../services/bookingEmail.service");
 
-// Check Room Availability
+// CHECK ROOM AVAILABILITY
 const isRoomAvailable = async (roomId, checkIn, checkOut, session = null) => {
   const query = Booking.findOne({
     room: roomId,
@@ -32,7 +32,7 @@ const isRoomAvailable = async (roomId, checkIn, checkOut, session = null) => {
   return !conflict;
 };
 
-// Create Booking
+// CREATE BOOKING
 const createABooking = async (req, res) => {
   const session = await mongoose.startSession();
 
@@ -48,8 +48,7 @@ const createABooking = async (req, res) => {
       payment,
     } = req.body;
 
-    // validation
-
+    // VALIDATION
     if (!room) {
       return res.status(400).json({
         message: "Room required",
@@ -69,7 +68,6 @@ const createABooking = async (req, res) => {
     }
 
     const checkIn = new Date(stay.checkIn);
-
     const checkOut = new Date(stay.checkOut);
 
     if (checkIn >= checkOut) {
@@ -78,8 +76,7 @@ const createABooking = async (req, res) => {
       });
     }
 
-    // find room
-
+    // FIND ROOM
     const roomData = await Room.findById(room).session(session);
 
     if (!roomData) {
@@ -88,8 +85,7 @@ const createABooking = async (req, res) => {
       });
     }
 
-    // capacity check
-
+    // CAPACITY CHECK
     const totalGuests = (stay.adults || 0) + (stay.children || 0);
 
     if (totalGuests > roomData.capacity.adults) {
@@ -98,8 +94,7 @@ const createABooking = async (req, res) => {
       });
     }
 
-    // check availability
-
+    // CHECK AVAILABILITY
     const available = await isRoomAvailable(room, checkIn, checkOut, session);
 
     if (!available) {
@@ -108,7 +103,7 @@ const createABooking = async (req, res) => {
       });
     }
 
-    // calculate price
+    // CALCULATE PRICE
     const extrasTotal = extras.reduce(
       (sum, item) => sum + Number(item.price || 0),
       0,
@@ -116,14 +111,12 @@ const createABooking = async (req, res) => {
 
     const pricing = await calculateBookingPrice({
       roomPrice: roomData.basePrice,
-
       checkIn,
-
       checkOut,
-
       extrasTotal,
     });
 
+    // CREATE BOOKING
     const booking = new Booking({
       bookingCode: "BK-" + Date.now() + "-" + Math.floor(Math.random() * 999),
 
@@ -136,7 +129,6 @@ const createABooking = async (req, res) => {
 
       stay: {
         ...stay,
-
         nights: pricing.nights,
       },
 
@@ -146,30 +138,23 @@ const createABooking = async (req, res) => {
 
       pricing: {
         roomPrice: pricing.roomPrice,
-
         weeklyDiscount: pricing.weeklyDiscount || 0,
-
         monthlyDiscount: pricing.monthlyDiscount || 0,
 
         discountAmount:
           (pricing.weeklyDiscount || 0) + (pricing.monthlyDiscount || 0),
 
         taxAmount: pricing.taxAmount || 0,
-
         serviceFeeAmount: pricing.serviceFeeAmount || 0,
 
         extrasTotal: pricing.extrasTotal,
-
         subtotal: pricing.subtotal,
-
         totalPrice: pricing.totalPrice,
-
         currency: pricing.currency,
       },
 
       payment: {
         method: payment?.method || "cash",
-
         status: "pending",
       },
 
@@ -181,15 +166,12 @@ const createABooking = async (req, res) => {
       ],
     });
 
-    await booking.save({
-      session,
-    });
+    await booking.save({ session });
 
     await session.commitTransaction();
 
     res.status(201).json({
       message: "Booking created successfully",
-
       booking,
     });
   } catch (error) {
@@ -205,7 +187,7 @@ const createABooking = async (req, res) => {
   }
 };
 
-// Preview Price
+// PRICE PREVIEW
 const calculatePricePreview = async (req, res) => {
   try {
     const { roomId, checkIn, checkOut, extrasTotal = 0 } = req.body;
@@ -220,11 +202,8 @@ const calculatePricePreview = async (req, res) => {
 
     const pricing = await calculateBookingPrice({
       roomPrice: room.basePrice,
-
       checkIn,
-
       checkOut,
-
       extrasTotal,
     });
 
@@ -236,16 +215,12 @@ const calculatePricePreview = async (req, res) => {
   }
 };
 
-// Get All Bookings
+// GET ALL BOOKINGS
 const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
-
       .populate("room")
-
-      .sort({
-        createdAt: -1,
-      });
+      .sort({ createdAt: -1 });
 
     res.json(bookings);
   } catch (error) {
@@ -255,16 +230,14 @@ const getAllBookings = async (req, res) => {
   }
 };
 
-// Get Booking By Email
+// GET BOOKINGS BY EMAIL
 const getBookingsByEmail = async (req, res) => {
   try {
     const bookings = await Booking.find({
       "guest.email": req.params.email.toLowerCase(),
     })
       .populate("room")
-      .sort({
-        createdAt: -1,
-      });
+      .sort({ createdAt: -1 });
 
     res.json(bookings);
   } catch (error) {
@@ -274,7 +247,7 @@ const getBookingsByEmail = async (req, res) => {
   }
 };
 
-// Get Single Booking
+// GET SINGLE BOOKING
 const getSingleBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id).populate("room");
@@ -293,31 +266,41 @@ const getSingleBooking = async (req, res) => {
   }
 };
 
-// Get Booking By Code
+// GET BOOKING BY CODE
 const getBookingByCode = async (req, res) => {
-  const booking = await Booking.findOne({
-    bookingCode: req.params.code,
-  }).populate("room");
-  if (!booking) {
-    return res.status(404).json({
-      message: "Booking not found",
+  try {
+    const booking = await Booking.findOne({
+      bookingCode: req.params.code,
+    }).populate("room");
+
+    if (!booking) {
+      return res.status(404).json({
+        message: "Booking not found",
+      });
+    }
+
+    res.json(booking);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
     });
   }
-  res.json(booking);
 };
 
-// Update Status
+// UPDATE STATUS
 const updateBookingStatus = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+      return res.status(404).json({
+        message: "Booking not found",
+      });
     }
 
     const { bookingStatus, paymentStatus } = req.body;
 
-    //  1. booking status
+    // BOOKING STATUS
     if (bookingStatus) {
       booking.bookingStatus = bookingStatus;
 
@@ -327,7 +310,7 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
-    // ✅ 2. payment status (IMPORTANT FIX)
+    // PAYMENT STATUS
     if (paymentStatus) {
       booking.payment.status = paymentStatus;
 
@@ -341,10 +324,8 @@ const updateBookingStatus = async (req, res) => {
     const populatedBooking = await Booking.findById(booking._id).populate(
       "room",
     );
-    let emailSent = false;
-    let emailMessage = "Email Not Triggered!";
 
-    // ✅ EMAIL ONLY AFTER PAID
+    // CREATE REVENUE + SEND EMAIL
     if (paymentStatus === "paid") {
       const existingRevenue = await Revenue.findOne({
         booking: booking._id,
@@ -362,10 +343,6 @@ const updateBookingStatus = async (req, res) => {
       }
 
       await sendBookingConfirmation(populatedBooking);
-      emailSent = true;
-      emailMessage = "Email Sent Successfully";
-    } else {
-      emailMessage = "Email not sent: payment not marked as paid";
     }
 
     res.json({
@@ -373,30 +350,41 @@ const updateBookingStatus = async (req, res) => {
       booking: populatedBooking,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
-
-// Cancel Booking (Soft Cancel - using existing schema)
+// CANCEL BOOKING (SOFT DELETE)
 const cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+      return res.status(404).json({
+        message: "Booking not found",
+      });
     }
 
     if (booking.bookingStatus === "cancelled") {
-      return res.status(400).json({ message: "Already cancelled" });
+      return res.status(400).json({
+        message: "Booking already cancelled",
+      });
     }
+
+    // SAFE BODY
+    const body = req.body || {};
 
     booking.bookingStatus = "cancelled";
 
     booking.cancellation = {
-      reason: req.body.reason || "Cancelled by admin/user",
+      cancelledBy: body.cancelledBy || "guest",
+
+      reason: body.reason || "Booking cancelled",
+
+      refundAmount: Number(body.refundAmount || 0),
+
       cancelledAt: new Date(),
-      cancelledBy: req.body.cancelledBy || "admin",
-      refundAmount: req.body.refundAmount || 0,
     };
 
     booking.statusHistory.push({
@@ -411,16 +399,23 @@ const cancelBooking = async (req, res) => {
       booking,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
+// RESEND EMAIL
 const resendBookingEmail = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id).populate("room");
 
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+      return res.status(404).json({
+        message: "Booking not found",
+      });
     }
 
     if (booking.payment.status !== "paid") {
@@ -435,17 +430,21 @@ const resendBookingEmail = async (req, res) => {
       message: "Email resent successfully",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
-// Hard Delete Booking (Admin only)
+// ADMIN PERMANENT DELETE
 const deleteBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+      return res.status(404).json({
+        message: "Booking not found",
+      });
     }
 
     await Booking.findByIdAndDelete(req.params.id);
@@ -454,7 +453,9 @@ const deleteBooking = async (req, res) => {
       message: "Booking permanently deleted",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -463,10 +464,10 @@ module.exports = {
   calculatePricePreview,
   getAllBookings,
   getBookingsByEmail,
-  getBookingByCode,
   getSingleBooking,
-  resendBookingEmail,
+  getBookingByCode,
   updateBookingStatus,
   cancelBooking,
+  resendBookingEmail,
   deleteBooking,
 };

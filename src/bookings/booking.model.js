@@ -82,16 +82,12 @@ const bookingSchema = new mongoose.Schema(
 
     extras: [
       {
-        name: {
-          type: String,
-          required: true,
+        facility: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "ExtraFacility",
         },
-
-        price: {
-          type: Number,
-          required: true,
-          min: 0,
-        },
+        name: String, // snapshot
+        price: Number, // snapshot
       },
     ],
 
