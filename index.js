@@ -9,9 +9,10 @@ require("dotenv").config();
 
 // middleware
 app.use(express.json());
+
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "https://YOUR-FRONTEND.vercel.app"],
     credentials: true,
   }),
 );
@@ -35,17 +36,23 @@ app.use("/api/facilities", facilityRoutes);
 app.use("/api/revenue", revenueRoutes);
 app.use("/api/extrafacilities", extraFacilityRoutes);
 
-async function main() {
-  await mongoose.connect(process.env.DB_URL);
-  app.use("/", (req, res) => {
-    res.send("Kandaw101Hotel Server is running!");
+// root route
+app.get("/", (req, res) => {
+  res.send("Kandaw101Hotel Server is running!");
+});
+
+// MongoDB connection
+mongoose
+  .connect(process.env.DB_URL)
+  .then(() => console.log("MongoDB connected successfully!"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+// Export Express app for Vercel
+module.exports = app;
+
+// Local development server
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Kandaw101Hotel app listening on port ${port}`);
   });
 }
-
-main()
-  .then(() => console.log("Mongodb connect successfully!"))
-  .catch((err) => console.log(err));
-
-app.listen(port, () => {
-  console.log(`Kandaw101Hotel app listening on port ${port}`);
-});
