@@ -2,12 +2,13 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const path = require("path");
-
 const mongoose = require("mongoose");
-const port = process.env.PORT || 5000;
+
 require("dotenv").config();
 
-// middleware
+const port = process.env.PORT || 5000;
+
+// Middleware
 app.use(express.json());
 
 app.use(
@@ -19,7 +20,68 @@ app.use(
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// routes
+// MongoDB connection cache for Vercel
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = {
+    conn: null,
+    promise: null,
+  };
+}
+
+const connectDB = async () => {
+  if (cached.conn && mongoose.connection.readyState === 1) {
+    return cached.conn;
+  }
+
+  if (!process.env.DB_URL) {
+    throw new Error("DB_URL is not configured");
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(process.env.DB_URL, {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 10000,
+        maxPoolSize: 10,
+      })
+      .then((mongooseInstance) => {
+        console.log("MongoDB connected successfully!");
+        return mongooseInstance;
+      })
+      .catch((error) => {
+        cached.promise = null;
+        throw error;
+      });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    cached.conn = null;
+    throw error;
+  }
+};
+
+// Ensure MongoDB is connected before API requests
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("MongoDB connection error:", error);
+
+    res.status(503).json({
+      success: false,
+      message: "Database connection failed. Please try again.",
+    });
+  }
+});
+
+// Routes
 const adminAuthRoutes = require("./src/admin/admin.route");
 const adminRoutes = require("./src/status/admin.stats");
 const bookingRoutes = require("./src/bookings/booking.route");
@@ -36,21 +98,15 @@ app.use("/api/facilities", facilityRoutes);
 app.use("/api/revenue", revenueRoutes);
 app.use("/api/extrafacilities", extraFacilityRoutes);
 
-// root route
+// Root route
 app.get("/", (req, res) => {
   res.send("Kandaw101Hotel Server is running!");
 });
 
-// MongoDB connection
-mongoose
-  .connect(process.env.DB_URL)
-  .then(() => console.log("MongoDB connected successfully!"))
-  .catch((err) => console.error("MongoDB connection error:", err));
-
 // Export Express app for Vercel
 module.exports = app;
 
-// Local development server
+// Local development
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Kandaw101Hotel app listening on port ${port}`);
