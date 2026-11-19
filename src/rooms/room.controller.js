@@ -1,5 +1,3 @@
-const fs = require("fs");
-const path = require("path");
 const slugify = require("slugify");
 const Room = require("./room.model");
 
@@ -18,10 +16,7 @@ const postARoom = async (req, res) => {
       }
     }
 
-    const images =
-      req.files?.map((file) => {
-        return `/uploads/${file.filename}`;
-      }) || [];
+    const images = req.files || [].map((file) => file.path);
 
     const room = await Room.create({
       ...req.body,
@@ -150,33 +145,12 @@ const updateRoom = async (req, res) => {
       }
     }
 
-    let images = room.images;
+    let images = room.images || [];
 
     // If new images uploaded
     if (req.files && req.files.length > 0) {
-      // Delete old images
-      if (room.images?.length > 0) {
-        room.images.forEach((image) => {
-          try {
-            const filename = image.split("/uploads/")[1];
-
-            if (!filename) return;
-
-            const filePath = path.join(__dirname, "../../uploads", filename);
-
-            if (fs.existsSync(filePath)) {
-              fs.unlinkSync(filePath);
-            }
-          } catch (error) {
-            console.log("Image delete error:", error);
-          }
-        });
-      }
-
       // Save new images
-      images = req.files.map((file) => {
-        return `/uploads/${file.filename}`;
-      });
+      images = req.files.map((file) => file.path);
     }
 
     const updatedRoom = await Room.findByIdAndUpdate(

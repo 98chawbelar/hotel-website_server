@@ -166,29 +166,49 @@ const uploadAvatar = async (req, res) => {
 
     if (!admin) {
       return res.status(404).json({
+        success: false,
         message: "Admin not found",
       });
     }
 
-    if (!req.file) {
+    if (!req.file || !req.file.path) {
       return res.status(400).json({
-        message: "No file uploaded",
+        success: false,
+        message: "Cloudinary image upload failed",
       });
     }
 
-    admin.avatar = `/uploads/${req.file.filename}`;
+    // Get Cloudinary image URL
+    const cloudinaryUrl = req.file.path;
+
+    if (!cloudinaryUrl.startsWith("https://res.cloudinary.com/")) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Cloudinary image URL",
+      });
+    }
+
+    // Save Cloudinary URL in MongoDB
+    admin.avatar = cloudinaryUrl;
 
     await admin.save();
 
-    res.status(200).json({
+    return res.status(200).json({
+      success: true,
       message: "Profile image updated successfully",
-      avatar: admin.avatar,
+      user: {
+        id: admin._id,
+        username: admin.username,
+        role: admin.role,
+        avatar: admin.avatar,
+      },
     });
   } catch (error) {
-    console.log(error);
+    console.error("AVATAR UPLOAD ERROR:", error);
 
-    res.status(500).json({
-      message: "Upload failed",
+    return res.status(500).json({
+      success: false,
+      message: "Profile image upload failed",
     });
   }
 };

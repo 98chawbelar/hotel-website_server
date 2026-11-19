@@ -19,8 +19,8 @@ router.get("/:slug", getSingleFacility);
 
 router.put(
   "/edit/:id",
-  upload.array("images", 20),
   verifyAdminToken,
+  upload.array("images", 20),
   updateFacility,
 );
 

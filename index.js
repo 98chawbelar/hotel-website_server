@@ -8,9 +8,19 @@ require("dotenv").config();
 
 const port = process.env.PORT || 5000;
 
-// Middleware
+// ================= MIDDLEWARE =================
 app.use(express.json());
 
+// Backend version check
+app.get("/api/version", (req, res) => {
+  res.status(200).json({
+    message: "Kandaw101Hotel Cloudinary Backend",
+    version: "cloudinary-upload-v1",
+    environment: process.env.NODE_ENV,
+  });
+});
+
+// CORS configuration
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://kandaw-101-hotel.vercel.app"],
@@ -18,7 +28,10 @@ app.use(
   }),
 );
 
+// Serve old local uploads (keep this for existing images)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ================= MONGODB CONNECTION =================
 
 // MongoDB connection cache for Vercel
 let cached = global.mongoose;
@@ -66,7 +79,7 @@ const connectDB = async () => {
   }
 };
 
-// Ensure MongoDB is connected before API requests
+// Connect MongoDB before API requests
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -81,7 +94,8 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Routes
+// ================= ROUTES =================
+
 const adminAuthRoutes = require("./src/admin/admin.route");
 const adminRoutes = require("./src/status/admin.stats");
 const bookingRoutes = require("./src/bookings/booking.route");
@@ -98,15 +112,18 @@ app.use("/api/facilities", facilityRoutes);
 app.use("/api/revenue", revenueRoutes);
 app.use("/api/extrafacilities", extraFacilityRoutes);
 
-// Root route
+// ================= ROOT ROUTE =================
+
 app.get("/", (req, res) => {
   res.send("Kandaw101Hotel Server is running!");
 });
 
-// Export Express app for Vercel
+// ================= EXPORT FOR VERCEL =================
+
 module.exports = app;
 
-// Local development
+// ================= LOCAL DEVELOPMENT =================
+
 if (require.main === module) {
   app.listen(port, () => {
     console.log(`Kandaw101Hotel app listening on port ${port}`);

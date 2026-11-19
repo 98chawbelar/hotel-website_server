@@ -3,9 +3,7 @@ const Facility = require("./facility.model");
 // CREATE FACILITY
 const createFacility = async (req, res) => {
   try {
-    images = req.files.map((file) => {
-      return `/uploads/${file.filename}`;
-    });
+    images = (req.file || []).map((file) => file.path);
 
     const newFacility = await Facility.create({
       name: req.body.name,
@@ -93,7 +91,7 @@ const updateFacility = async (req, res) => {
 
     // replace images only if new files uploaded
     if (req.files && req.files.length > 0) {
-      updateData.images = req.files.map((file) => file.filename);
+      updateData.images = req.files.map((file) => file.path);
     }
 
     const updatedFacility = await Facility.findByIdAndUpdate(
