@@ -16,7 +16,18 @@ const postARoom = async (req, res) => {
       }
     }
 
-    const images = req.files || [].map((file) => file.path);
+    const images = (req.files || []).map((file) => file.path);
+
+    if (
+      images.some(
+        (url) => !url || !url.startsWith("https://res.cloudinary.com/"),
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "One or more images failed to upload to Cloudinary",
+      });
+    }
 
     const room = await Room.create({
       ...req.body,
